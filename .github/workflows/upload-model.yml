@@ -1,0 +1,27 @@
+name: Upload Extruded Model
+
+on:
+  workflow_dispatch:
+    inputs:
+      model_file:
+        description: "Base64 encoded .glb"
+        required: true
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Decode and save .glb
+        run: |
+          echo "${{ github.event.inputs.model_file }}" | base64 -d > models/extruded.glb
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add models/extruded.glb
+          git commit -m "Auto-update extruded.glb"
+          git push
