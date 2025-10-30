@@ -18,10 +18,12 @@ jobs:
         run: |
           echo "${{ github.event.inputs.model_file }}" | base64 -d > models/extruded.glb
 
-      - name: Commit and push
+      - name: Commit and push updated model
+        env:
+          TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add models/extruded.glb
-          git commit -m "Auto-update extruded.glb"
-          git push
+          git commit -m "Auto-update extruded.glb" || echo "No changes to commit"
+          git push https://x-access-token:${TOKEN}@github.com/${{ github.repository }} HEAD:main
