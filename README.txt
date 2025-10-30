@@ -1,16 +1,13 @@
-3D Extrude Tool + GitHub Actions
-=================================
+# 3D Extrude Tool + GitHub Actions
 
-Usage:
-1. Enable GitHub Pages on this repo (branch=main, root).
-2. Open index.html (from Pages or locally).
-3. Upload a transparent PNG, adjust sliders, click "Export & Upload".
-4. The file is base64-encoded and sent to a GitHub Actions workflow.
-5. Workflow saves it as models/extruded.glb and commits to repo.
-6. viewer.html always loads the latest extruded.glb.
-7. Use: https://<username>.github.io/3d-extrude-tool-actions/viewer.html in OBS Browser Source.
+### Usage
+1. Enable **GitHub Pages** (Settings → Pages → Branch: `main`, root).  
+2. Add a GitHub Secret named `PAT_TOKEN` with your Personal Access Token (`repo` + `workflow` scopes).  
+3. Open `index.html` in your browser (from GitHub Pages).  
+4. Upload a **transparent PNG**, adjust sliders, click **Export & Upload**.  
+5. GitHub Actions saves the file as `models/extruded.glb`.  
+6. Open `viewer.html` (on GitHub Pages) → shows the spinning model with a transparent background.  
+7. Use the link in **OBS Browser Source**.
 
-Setup:
-- Create a GitHub PAT with workflow + repo scope.
-- Replace YOUR_USERNAME and YOUR_PAT_WITH_WORKFLOW_SCOPE in index.html.
-- (Optional: use a proxy or secrets for safer token handling).
+Example OBS link:  
+https://<username>.github.io/3d-extrude-tool-actions/viewer.html
