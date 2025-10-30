@@ -10,4 +10,4 @@
 7. Use the link in **OBS Browser Source**.
 
 Example OBS link:  
-https://<username>.github.io/3d-extrude-tool-actions/viewer.html
+https://hubcopilot.github.io/png-to-threed/viewer.html
