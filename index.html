@@ -2,10 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>3D Extrude Tool (GitHub Actions)</title>
+  <title>3D Extrude Tool (with Debug)</title>
   <style>
     body { margin:0; background:#111; color:#fff; font-family:sans-serif; }
-    #controls { position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.6); padding:10px; border-radius:8px; z-index:10; }
+    #controls { 
+      position:absolute; top:10px; left:10px; 
+      background:rgba(0,0,0,0.6); padding:10px; border-radius:8px; z-index:10; 
+    }
     label { display:block; margin:6px 0 2px; }
     input[type=range] { width:150px; }
   </style>
@@ -18,6 +21,7 @@
     <label>Smoothing: <span id="smoothVal">2</span></label>
     <input type="range" id="smoothSlider" min="0" max="10" step="1" value="2">
     <button id="exportBtn">Export & Upload</button>
+    <button id="testBtn">Test Trigger Only</button>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/build/three.min.js"></script>
@@ -25,6 +29,8 @@
   <script src="https://cdn.jsdelivr.net/npm/three@0.157.0/examples/js/exporters/GLTFExporter.js"></script>
 
   <script>
+    const repo = "hubcopilot/png-to-threed"; // 🔑 replace with your username/repo
+
     let scene, camera, renderer, mesh, currentTexture, currentShapes;
     let extrusionDepth = 0.3;
     let smoothingStrength = 2;
@@ -33,13 +39,13 @@
 
     function init() {
       scene = new THREE.Scene();
-      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
       camera.position.z = 5;
-      renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer = new THREE.WebGLRenderer({ alpha:true, antialias:true });
       renderer.setSize(window.innerWidth, window.innerHeight);
       document.body.appendChild(renderer.domElement);
       const light = new THREE.DirectionalLight(0xffffff, 1);
-      light.position.set(5, 5, 5).normalize();
+      light.position.set(5,5,5).normalize();
       scene.add(light);
       animate();
     }
@@ -50,7 +56,6 @@
       renderer.render(scene, camera);
     }
 
-    // Path simplification
     function simplifyPath(points, tolerance) {
       if (points.length < 3) return points;
       const sqTolerance = tolerance * tolerance;
@@ -81,7 +86,6 @@
       return simplifyDP(points, sqTolerance);
     }
 
-    // Trace alpha → shapes
     function traceContours(imgData, smooth=2) {
       const { data, width, height } = imgData;
       const alphaThreshold = 128;
@@ -107,7 +111,19 @@
       const material = new THREE.MeshPhongMaterial({ map: currentTexture, transparent:true, side:THREE.DoubleSide });
       if (mesh) scene.remove(mesh);
       mesh = new THREE.Mesh(geometry, material);
-      mesh.scale.set(0.01, -0.01, 0.01);
+
+      // normalize to fit screen
+      const box = new THREE.Box3().setFromObject(mesh);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const maxDim = Math.max(size.x, size.y, size.z);
+      const scale = 3 / maxDim;
+      mesh.scale.set(scale, scale, scale);
+
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      mesh.position.sub(center);
+
       scene.add(mesh);
     }
 
@@ -140,10 +156,8 @@
       rebuildMesh();
     });
 
-    // Trigger workflow (no PAT in browser)
+    // 🚀 Export & Upload (sends actual model)
     async function triggerWorkflow(glbBlob) {
-      const repo = "hubcopilot/png-to-threed";
-
       const reader = new FileReader();
       reader.onloadend = async () => {
         const base64Data = reader.result.split(",")[1];
@@ -156,7 +170,7 @@
           }
         );
         if(response.ok){
-          alert("🚀 Workflow triggered! Your model will be live soon at: https://" + repo.split("/")[0] + ".github.io/" + repo.split("/")[1] + "/viewer.html");
+          alert("🚀 Workflow triggered! Check your Actions tab.");
         } else {
           const err=await response.json(); alert("❌ Failed: "+JSON.stringify(err));
         }
@@ -171,6 +185,23 @@
         const blob=new Blob([JSON.stringify(gltf)],{type:"model/gltf+json"});
         triggerWorkflow(blob);
       });
+    });
+
+    // 🧪 Test Trigger button (no 3D needed, just dispatch test)
+    document.getElementById("testBtn").addEventListener("click", async ()=>{
+      const response = await fetch(
+        `https://api.github.com/repos/${repo}/actions/workflows/upload-model.yml/dispatches`,
+        {
+          method: "POST",
+          headers: { "Accept":"application/vnd.github+json" },
+          body: JSON.stringify({ ref:"main", inputs:{ model_file:"dGVzdA==" } }) // "test" in base64
+        }
+      );
+      if(response.ok){
+        alert("✅ Test workflow triggered! Check Actions tab.");
+      } else {
+        const err=await response.json(); alert("❌ Failed: "+JSON.stringify(err));
+      }
     });
   </script>
 </body>
